@@ -18,11 +18,10 @@ type ListNamespacesHandler struct {
 	userHeader string
 }
 
-func NewListNamespacesHandler(log *slog.Logger, lister NamespaceLister, userHeader string) http.Handler {
+func NewListNamespacesHandler(log *slog.Logger, lister NamespaceLister) http.Handler {
 	return &ListNamespacesHandler{
-		log:        log,
-		lister:     lister,
-		userHeader: userHeader,
+		log:    log,
+		lister: lister,
 	}
 }
 

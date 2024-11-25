@@ -61,14 +61,14 @@ func addAuthnMiddleware(ar authenticator.Request, next http.Handler) http.Handle
 	}
 }
 
-func NewServer(l *slog.Logger, ar authenticator.Request, lister NamespaceLister, userHeader string) *NamespaceListerServer {
+func NewServer(l *slog.Logger, ar authenticator.Request, lister NamespaceLister) *NamespaceListerServer {
 	// configure the server
 	h := http.NewServeMux()
 	h.Handle(patternGetNamespaces,
 		addInjectLoggerMiddleware(l,
 			addLogMiddleware(
 				addAuthnMiddleware(ar,
-					NewListNamespacesHandler(l, lister, userHeader)))))
+					NewListNamespacesHandler(l, lister)))))
 
 	return &NamespaceListerServer{
 		Server: &http.Server{
