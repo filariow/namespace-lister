@@ -43,14 +43,4 @@ spec:
           capabilities:
             drop:
               - "ALL"
-      volumes:
-      - name: "traefik-plugin-storage"
-        emptyDir:
-          sizeLimit: 20Mi
-      - name: "traefik-static-config"
-        configMap:
-          name: "traefik-sidecar-static-config"
-      - name: "traefik-dynamic-config"
-        configMap:
-          name: "traefik-sidecar-dynamic-config"
       terminationGracePeriodSeconds: 60
