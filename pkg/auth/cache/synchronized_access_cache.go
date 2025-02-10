@@ -96,7 +96,9 @@ func (s *SynchronizedAccessCache) Synch(ctx context.Context) error {
 	}
 
 	// restock the cache
-	s.AccessCache.Restock(&c)
+	if err := s.AccessCache.Restock(nn, &c); err != nil {
+		return err
+	}
 
 	s.logger.Debug("cache restocked")
 	return nil

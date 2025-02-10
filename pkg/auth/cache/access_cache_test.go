@@ -1,6 +1,8 @@
 package cache_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -33,11 +35,13 @@ var _ = Describe("AuthCache", func() {
 		Expect(nn).To(BeEmpty())
 	})
 
-	It("matches subjects", func() {
+	It("matches subjects", func(ctx context.Context) {
 		// given
 		sub := rbacv1.Subject{Kind: "User", Name: "myuser"}
+		nnl := corev1.NamespaceList{Items: enn}
 		c := cache.NewAccessCache()
-		c.Restock(&map[rbacv1.Subject][]corev1.Namespace{sub: enn})
+
+		Expect(c.Restock(nnl, &map[rbacv1.Subject][]corev1.Namespace{sub: enn})).To(Succeed())
 
 		// when
 		nn := c.List(sub)
