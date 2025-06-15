@@ -1,6 +1,8 @@
 module github.com/konflux-ci/namespace-lister
 
-go 1.22.9
+go 1.23
+
+toolchain go1.23.9
 
 require (
 	github.com/go-logr/logr v1.4.2
@@ -9,7 +11,7 @@ require (
 	github.com/prometheus/client_golang v1.21.0
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.62.0
-	go.uber.org/mock v0.5.0
+	go.uber.org/mock v0.5.2
 	k8s.io/api v0.31.2
 	k8s.io/apimachinery v0.31.2
 	k8s.io/apiserver v0.31.2
