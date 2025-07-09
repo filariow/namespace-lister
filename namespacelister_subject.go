@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/konflux-ci/namespace-lister/pkg/auth/cache"
+	"github.com/konflux-ci/namespace-lister/pkg/auth/cache/authenticated"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,9 +18,9 @@ var CmpGroupSystemAuthenticatedLast = func(a, b string) int {
 	switch {
 	case a == b:
 		return 0
-	case a == cache.SystemAuthenticatedGroup:
+	case a == authenticated.SystemAuthenticatedGroup:
 		return 1
-	case b == cache.SystemAuthenticatedGroup:
+	case b == authenticated.SystemAuthenticatedGroup:
 		return -1
 	default:
 		return cmp.Compare(a, b)

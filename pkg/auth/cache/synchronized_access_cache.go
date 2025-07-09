@@ -26,9 +26,15 @@ func isSynchAlreadyRunningErr(err error) bool {
 
 var _ AccessCache = &SynchronizedAccessCache{}
 
-type TamperNamespaceFunc func(rbacv1.Subject, corev1.Namespace) corev1.Namespace
+type (
+	PreprocessNamespaceFunc func(corev1.Namespace) corev1.Namespace
+	TamperNamespaceFunc     func(rbacv1.Subject, corev1.Namespace) corev1.Namespace
+)
 
-var NoOpTamperNamespaceFunc TamperNamespaceFunc = func(_ rbacv1.Subject, ns corev1.Namespace) corev1.Namespace { return ns }
+var (
+	NoOpPreprocessNamespaceFunc PreprocessNamespaceFunc = func(ns corev1.Namespace) corev1.Namespace { return ns }
+	NoOpTamperNamespaceFunc     TamperNamespaceFunc     = func(_ rbacv1.Subject, ns corev1.Namespace) corev1.Namespace { return ns }
+)
 
 // SynchronizedAccessCache wraps an AccessCache adding logic for synchronizing its data.
 type SynchronizedAccessCache struct {
@@ -38,9 +44,10 @@ type SynchronizedAccessCache struct {
 	synchronizing atomic.Bool
 	once          sync.Once
 
-	subjectLocator  rbac.SubjectLocator
-	namespaceLister client.Reader
-	tamperNamespace TamperNamespaceFunc
+	subjectLocator          rbac.SubjectLocator
+	namespaceLister         client.Reader
+	preprocessNamespaceFunc PreprocessNamespaceFunc
+	tamperNamespaceFunc     TamperNamespaceFunc
 
 	logger           *slog.Logger
 	syncErrorHandler func(context.Context, error, *SynchronizedAccessCache)
@@ -61,9 +68,10 @@ func NewSynchronizedAccessCache(
 		AccessCache: NewAtomicListRestockAccessCache(),
 		requested:   make(chan struct{}, 1),
 
-		subjectLocator:  subjectLocator,
-		namespaceLister: namespaceLister,
-		tamperNamespace: NoOpTamperNamespaceFunc,
+		subjectLocator:          subjectLocator,
+		namespaceLister:         namespaceLister,
+		preprocessNamespaceFunc: NoOpPreprocessNamespaceFunc,
+		tamperNamespaceFunc:     NoOpTamperNamespaceFunc,
 	})
 }
 
@@ -99,6 +107,9 @@ func (s *SynchronizedAccessCache) synch(ctx context.Context) (AccessData, error)
 
 	// get subjects for each namespace
 	for _, ns := range nn.Items {
+		// run preprocessNamespace hook
+		ns = s.preprocessNamespaceFunc(ns)
+
 		// interrupt if context elapsed
 		if err := ctx.Err(); err != nil {
 			s.logger.Warn("cache restocking: could not complete calculate access data process", "error", err)
@@ -127,7 +138,10 @@ func (s *SynchronizedAccessCache) synch(ctx context.Context) (AccessData, error)
 
 		// store in temp cache
 		for _, sub := range ss {
-			tns := s.tamperNamespace(sub, ns)
+			// run tamperNamespace hook
+			tns := s.tamperNamespaceFunc(sub, ns)
+
+			// append namespace
 			c[sub] = append(c[sub], tns)
 		}
 	}

@@ -10,12 +10,13 @@ import (
 
 // CacheSynchronizerOptions allows tune SynchronizedAccessCache's behavior
 type CacheSynchronizerOptions struct {
-	Logger              *slog.Logger
-	ResyncPeriod        time.Duration
-	SynchTimeout        time.Duration
-	SyncErrorHandler    func(context.Context, error, *SynchronizedAccessCache)
-	Metrics             AccessCacheMetrics
-	TamperNamespaceFunc TamperNamespaceFunc
+	Logger                  *slog.Logger
+	ResyncPeriod            time.Duration
+	SynchTimeout            time.Duration
+	SyncErrorHandler        func(context.Context, error, *SynchronizedAccessCache)
+	Metrics                 AccessCacheMetrics
+	TamperNamespaceFunc     TamperNamespaceFunc
+	PreprocessNamespaceFunc PreprocessNamespaceFunc
 }
 
 var defaultCacheSynchronizerOptions = CacheSynchronizerOptions{
@@ -56,6 +57,11 @@ func (opts *CacheSynchronizerOptions) Apply(s *SynchronizedAccessCache) *Synchro
 
 	// add metricsRegistry
 	s.metrics = cmp.Or(opts.Metrics, defaultCacheSynchronizerOptions.Metrics)
+
+	// add preprocessNamespaceFunc
+	if opts.PreprocessNamespaceFunc != nil {
+		s.preprocessNamespaceFunc = opts.PreprocessNamespaceFunc
+	}
 
 	// add tamperNamespaceFunc
 	if opts.TamperNamespaceFunc != nil {

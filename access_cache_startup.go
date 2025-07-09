@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/konflux-ci/namespace-lister/pkg/auth/cache"
+	"github.com/konflux-ci/namespace-lister/pkg/auth/cache/authenticated"
 	"github.com/prometheus/client_golang/prometheus"
 
 	corev1 "k8s.io/api/core/v1"
@@ -28,10 +29,11 @@ func buildAndStartSynchronizedAccessCache(ctx context.Context, resourceCache crc
 	synchCache := cache.NewSynchronizedAccessCache(
 		sae,
 		resourceCache, cache.CacheSynchronizerOptions{
-			Logger:              getLoggerFromContext(ctx),
-			ResyncPeriod:        getResyncPeriodFromEnvOrZero(ctx),
-			Metrics:             acm,
-			TamperNamespaceFunc: cache.TamperNamespaceWithSharedAccessVirtualLabel,
+			Logger:                  getLoggerFromContext(ctx),
+			ResyncPeriod:            getResyncPeriodFromEnvOrZero(ctx),
+			Metrics:                 acm,
+			PreprocessNamespaceFunc: authenticated.PreprocessNamespaceRemoveSharedAccessVirtualLabel,
+			TamperNamespaceFunc:     authenticated.TamperNamespaceWithSharedAccessVirtualLabel,
 		},
 	)
 
