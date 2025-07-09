@@ -40,7 +40,7 @@ var _ = Describe("Subjectnamespaceslister", func() {
 		subjectNamespacesLister.EXPECT().
 			List(
 				rbacv1.Subject{
-					Kind:      "ServiceAccount",
+					Kind:      rbacv1.ServiceAccountKind,
 					Name:      "myserviceaccount",
 					Namespace: "mynamespace",
 				},
@@ -49,10 +49,96 @@ var _ = Describe("Subjectnamespaceslister", func() {
 			Times(1)
 
 		// given
-		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister)
+		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister, nil)
 
 		// when
 		Expect(nl.ListNamespaces(ctx, "system:serviceaccount:mynamespace:myserviceaccount", nil)).
+			// then
+			To(BeEquivalentTo(&corev1.NamespaceList{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "NamespaceList",
+					APIVersion: "v1",
+				},
+				Items: enn,
+			}))
+	})
+
+	It("parses groups", func(ctx context.Context) {
+		// set expectation
+		subjectNamespacesLister.EXPECT().
+			List(
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.UserKind,
+					Name:     "myuser",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "system:authenticated",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "mygroup",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "non-existing-group",
+				},
+			).
+			Return(enn).
+			Times(1)
+
+		// given
+		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister, nil)
+
+		// when
+		Expect(nl.ListNamespaces(ctx, "myuser", []string{"system:authenticated", "mygroup", "non-existing-group"})).
+			// then
+			To(BeEquivalentTo(&corev1.NamespaceList{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "NamespaceList",
+					APIVersion: "v1",
+				},
+				Items: enn,
+			}))
+	})
+
+	It("sorts groups", func(ctx context.Context) {
+		// set expectation
+		subjectNamespacesLister.EXPECT().
+			List(
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.UserKind,
+					Name:     "myuser",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "mygroup",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "non-existing-group",
+				},
+				rbacv1.Subject{
+					APIGroup: rbacv1.GroupName,
+					Kind:     rbacv1.GroupKind,
+					Name:     "system:authenticated",
+				},
+			).
+			Return(enn).
+			Times(1)
+
+		// given
+		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister, namespacelister.CmpGroupSystemAuthenticatedLast)
+
+		// when
+		Expect(nl.ListNamespaces(ctx, "myuser", []string{"system:authenticated", "mygroup", "non-existing-group"})).
 			// then
 			To(BeEquivalentTo(&corev1.NamespaceList{
 				TypeMeta: metav1.TypeMeta{
@@ -69,7 +155,7 @@ var _ = Describe("Subjectnamespaceslister", func() {
 			List(
 				rbacv1.Subject{
 					APIGroup: rbacv1.GroupName,
-					Kind:     "User",
+					Kind:     rbacv1.UserKind,
 					Name:     "myuser",
 				},
 			).
@@ -77,7 +163,7 @@ var _ = Describe("Subjectnamespaceslister", func() {
 			Times(1)
 
 		// given
-		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister)
+		nl := namespacelister.NewSubjectNamespaceLister(subjectNamespacesLister, nil)
 
 		// when
 		Expect(nl.ListNamespaces(ctx, "myuser", nil)).

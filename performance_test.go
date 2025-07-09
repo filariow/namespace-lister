@@ -87,7 +87,7 @@ var _ = Describe("Authorizing requests", Serial, Ordered, func() {
 		c, err := buildAndStartSynchronizedAccessCache(ctx, cache, nil)
 		utilruntime.Must(err)
 
-		nl := NewSubjectNamespaceLister(c)
+		nl := NewSubjectNamespaceLister(c, CmpGroupSystemAuthenticatedLast)
 		lnh := NewListNamespacesHandler(nl)
 
 		// we sample a function repeatedly to get a statistically significant set of measurements

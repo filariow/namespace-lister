@@ -296,3 +296,6 @@ var _ = DescribeTable("duplicate results", func(ctx context.Context, sr *mocks.M
 		},
 	}),
 )
+
+// TODO: add tests
+// 1. if tamper function is defined it is called eventually

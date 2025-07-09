@@ -1,9 +1,12 @@
 package main
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"strings"
 
+	"github.com/konflux-ci/namespace-lister/pkg/auth/cache"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,18 +14,33 @@ import (
 
 var _ NamespaceLister = &subjectNamespaceLister{}
 
+var CmpGroupSystemAuthenticatedLast = func(a, b string) int {
+	switch {
+	case a == b:
+		return 0
+	case a == cache.SystemAuthenticatedGroup:
+		return 1
+	case b == cache.SystemAuthenticatedGroup:
+		return -1
+	default:
+		return cmp.Compare(a, b)
+	}
+}
+
 type SubjectNamespacesLister interface {
 	List(subjects ...rbacv1.Subject) []corev1.Namespace
 }
 
 type subjectNamespaceLister struct {
 	subjectNamespacesLister SubjectNamespacesLister
+	cmpGroups               func(a, b string) int
 }
 
 // NewSubjectNamespaceLister builds a SubjectNamespacesLister
-func NewSubjectNamespaceLister(subjectNamespacesLister SubjectNamespacesLister) NamespaceLister {
+func NewSubjectNamespaceLister(subjectNamespacesLister SubjectNamespacesLister, cmpGroups func(string, string) int) NamespaceLister {
 	return &subjectNamespaceLister{
 		subjectNamespacesLister: subjectNamespacesLister,
+		cmpGroups:               cmpGroups,
 	}
 }
 
@@ -49,6 +67,11 @@ func (c *subjectNamespaceLister) subjects(username string, groups []string) []rb
 
 	// add username subject
 	subs[0] = c.parseUsername(username)
+
+	// sort groups if needed
+	if c.cmpGroups != nil {
+		slices.SortFunc(groups, c.cmpGroups)
+	}
 
 	// add groups subjects
 	for i, g := range groups {

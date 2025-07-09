@@ -26,6 +26,10 @@ func isSynchAlreadyRunningErr(err error) bool {
 
 var _ AccessCache = &SynchronizedAccessCache{}
 
+type TamperNamespaceFunc func(rbacv1.Subject, corev1.Namespace) corev1.Namespace
+
+var NoOpTamperNamespaceFunc TamperNamespaceFunc = func(_ rbacv1.Subject, ns corev1.Namespace) corev1.Namespace { return ns }
+
 // SynchronizedAccessCache wraps an AccessCache adding logic for synchronizing its data.
 type SynchronizedAccessCache struct {
 	AccessCache
@@ -36,6 +40,7 @@ type SynchronizedAccessCache struct {
 
 	subjectLocator  rbac.SubjectLocator
 	namespaceLister client.Reader
+	tamperNamespace TamperNamespaceFunc
 
 	logger           *slog.Logger
 	syncErrorHandler func(context.Context, error, *SynchronizedAccessCache)
@@ -58,6 +63,7 @@ func NewSynchronizedAccessCache(
 
 		subjectLocator:  subjectLocator,
 		namespaceLister: namespaceLister,
+		tamperNamespace: NoOpTamperNamespaceFunc,
 	})
 }
 
@@ -120,8 +126,9 @@ func (s *SynchronizedAccessCache) synch(ctx context.Context) (AccessData, error)
 		ss = s.removeDuplicateSubjects(ss)
 
 		// store in temp cache
-		for _, s := range ss {
-			c[s] = append(c[s], ns)
+		for _, sub := range ss {
+			tns := s.tamperNamespace(sub, ns)
+			c[sub] = append(c[sub], tns)
 		}
 	}
 

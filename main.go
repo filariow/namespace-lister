@@ -99,7 +99,7 @@ func run(l *slog.Logger) error {
 	}
 
 	// create the namespace lister
-	nsl := NewSubjectNamespaceLister(accessCache)
+	nsl := NewSubjectNamespaceLister(accessCache, CmpGroupSystemAuthenticatedLast)
 
 	// build and start http metrics server
 	if enableMetrics {

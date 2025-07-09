@@ -28,9 +28,10 @@ func buildAndStartSynchronizedAccessCache(ctx context.Context, resourceCache crc
 	synchCache := cache.NewSynchronizedAccessCache(
 		sae,
 		resourceCache, cache.CacheSynchronizerOptions{
-			Logger:       getLoggerFromContext(ctx),
-			ResyncPeriod: getResyncPeriodFromEnvOrZero(ctx),
-			Metrics:      acm,
+			Logger:              getLoggerFromContext(ctx),
+			ResyncPeriod:        getResyncPeriodFromEnvOrZero(ctx),
+			Metrics:             acm,
+			TamperNamespaceFunc: cache.TamperNamespaceWithSharedAccessVirtualLabel,
 		},
 	)
 
