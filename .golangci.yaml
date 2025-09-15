@@ -16,6 +16,7 @@ linters:
     - gochecksumtype
     - gosec
     - gosmopolitan
+    - govet
     - loggercheck
     - makezero
     - musttag
