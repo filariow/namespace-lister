@@ -13,7 +13,7 @@ metadata:
     appstudio.openshift.io/component: namespace-lister
     pipelines.appstudio.openshift.io/type: build
   name: namespace-lister-on-push
-  namespace: konflux-tenant-ops-tenant
+  namespace: rh-ee-filario-2-tenant
 spec:
   params:
   - name: git-url
